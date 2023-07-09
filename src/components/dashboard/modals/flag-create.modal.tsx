@@ -18,6 +18,9 @@ import {
 } from '@chakra-ui/react';
 import lodash from 'lodash';
 import { CreateFlagParams } from 'hooks/use-create-flag';
+import { MultiSelect } from 'chakra-multiselect';
+
+const TAGS = ['tag', 'another-tag'];
 
 export const FlagCreateModal = ({
   isOpen,
@@ -36,14 +39,9 @@ export const FlagCreateModal = ({
   const [usingMobileKey, setUsingMobilekey] = useState<boolean>(false);
   const [usingEnvironmentId, setUsingEnvironmentId] = useState<boolean>(false);
   const [isPermament, setIsPermament] = useState<boolean>(false);
-  const [tagsCsv, setTagsCsv] = useState<string>('');
   const [kind, setKind] = useState<'boolean' | 'string'>('boolean');
   const [stringVariationsCsv, setStringVariationsCsv] = useState<string>('');
-
-  const tags = useMemo(() => {
-    const normalizedTags = tagsCsv.split(',').map((tag) => tag.trim());
-    return lodash.compact(normalizedTags);
-  }, [tagsCsv]);
+  const [tags, setTags] = useState<string[]>([]);
 
   const variations = useMemo(() => {
     if (kind === 'string') {
@@ -57,8 +55,9 @@ export const FlagCreateModal = ({
     const hasName = (name ?? '').trim().length > 0;
     const hasKey = (key ?? '').trim().length > 0;
     const hasSufficientVariations = variations.length >= 2;
-    return hasName && hasKey && hasSufficientVariations;
-  }, [name, key, variations]);
+    const hasDescription = (description ?? '').trim().length > 0;
+    return hasName && hasKey && hasSufficientVariations && hasDescription;
+  }, [name, key, variations, description]);
 
   return (
     <Modal isOpen={isOpen} onClose={onCancel} size="xl">
@@ -86,7 +85,7 @@ export const FlagCreateModal = ({
             />
           </Box>
           <Box marginTop="3">
-            <FormLabel>Description (optional)</FormLabel>
+            <FormLabel>Description</FormLabel>
             <Input
               placeholder="Flag description"
               value={description}
@@ -95,10 +94,10 @@ export const FlagCreateModal = ({
           </Box>
           <Box marginTop="3">
             <FormLabel>Tags (optional)</FormLabel>
-            <Input
-              placeholder="comma,separated,tags"
-              value={tagsCsv}
-              onChange={(e) => setTagsCsv(e.target.value)}
+            <MultiSelect
+              onChange={(values) => setTags(values as any)}
+              value={tags}
+              options={TAGS.map((tag) => ({ label: tag, value: tag }))}
             />
           </Box>
           <Box marginTop="5">
