@@ -4,6 +4,7 @@ import {
   Button,
   Checkbox,
   Code,
+  FormControl,
   FormLabel,
   Input,
   Modal,
@@ -18,9 +19,6 @@ import {
 } from '@chakra-ui/react';
 import lodash from 'lodash';
 import { CreateFlagParams } from 'hooks/use-create-flag';
-import { MultiSelect } from 'chakra-multiselect';
-
-const TAGS = ['tag', 'another-tag'];
 
 export const FlagCreateModal = ({
   isOpen,
@@ -41,7 +39,7 @@ export const FlagCreateModal = ({
   const [isPermament, setIsPermament] = useState<boolean>(false);
   const [kind, setKind] = useState<'boolean' | 'string'>('boolean');
   const [stringVariationsCsv, setStringVariationsCsv] = useState<string>('');
-  const [tags, setTags] = useState<string[]>([]);
+  const [tagsCsv, setTagsCsv] = useState<string>('');
 
   const variations = useMemo(() => {
     if (kind === 'string') {
@@ -51,13 +49,18 @@ export const FlagCreateModal = ({
     return [{ value: true }, { value: false }];
   }, [kind, stringVariationsCsv]);
 
+  const tags = useMemo(() => {
+    const normalizedTags = tagsCsv.split(',').map((tag) => tag.trim());
+    return lodash.compact(normalizedTags);
+  }, [tagsCsv]);
+
   const canConfirm = useMemo(() => {
     const hasName = (name ?? '').trim().length > 0;
     const hasKey = (key ?? '').trim().length > 0;
     const hasSufficientVariations = variations.length >= 2;
     const hasDescription = (description ?? '').trim().length > 0;
-    return hasName && hasKey && hasSufficientVariations && hasDescription;
-  }, [name, key, variations, description]);
+    return hasName && hasKey && hasSufficientVariations && hasDescription && tags.length !== 0;
+  }, [name, key, variations, description, tags]);
 
   return (
     <Modal isOpen={isOpen} onClose={onCancel} size="xl">
@@ -67,38 +70,46 @@ export const FlagCreateModal = ({
         <ModalCloseButton />
         <ModalBody>
           <Box marginTop="3">
-            <FormLabel>Name</FormLabel>
-            <Input
-              placeholder="Flag name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              isRequired
-            />
+            <FormControl isRequired>
+              <FormLabel>Name</FormLabel>
+              <Input
+                placeholder="Flag name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                isRequired
+              />
+            </FormControl>
           </Box>
           <Box marginTop="3">
-            <FormLabel>Key</FormLabel>
-            <Input
-              placeholder="Flag key"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              isRequired
-            />
+            <FormControl isRequired>
+              <FormLabel>Key</FormLabel>
+              <Input
+                placeholder="Flag key"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                isRequired
+              />
+            </FormControl>
           </Box>
           <Box marginTop="3">
-            <FormLabel>Description</FormLabel>
-            <Input
-              placeholder="Flag description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+            <FormControl isRequired>
+              <FormLabel>Description</FormLabel>
+              <Input
+                placeholder="Flag description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </FormControl>
           </Box>
           <Box marginTop="3">
-            <FormLabel>Tags (optional)</FormLabel>
-            <MultiSelect
-              onChange={(values) => setTags(values as any)}
-              value={tags}
-              options={TAGS.map((tag) => ({ label: tag, value: tag }))}
-            />
+            <FormControl isRequired>
+              <FormLabel>Tags</FormLabel>
+              <Input
+                placeholder="Enter flag type, team name and quarter here as comma separated values"
+                value={tagsCsv}
+                onChange={(e) => setTagsCsv(e.target.value)}
+              />
+            </FormControl>
           </Box>
           <Box marginTop="5">
             <FormLabel>
