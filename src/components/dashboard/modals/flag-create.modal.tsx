@@ -165,7 +165,7 @@ export const FlagCreateModal = ({
           </Box>
           <Box marginTop="5">
             <Checkbox isChecked={isPermament} onChange={(e) => setIsPermament(e.target.checked)}>
-              This is a permament flag
+              This is a permanent flag
             </Checkbox>
           </Box>
         </ModalBody>
