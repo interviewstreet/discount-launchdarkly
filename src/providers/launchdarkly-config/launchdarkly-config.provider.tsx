@@ -30,9 +30,14 @@ export const LaunchDarklyConfigProvider = ({ children }: LaunchDarklyConfigProvi
 
   useEffect(() => {
     if (projects?.items?.length) {
+      const projectQueryParam = new URLSearchParams(window.location.search).get('project') || '';
+      const queryParamProject = projects.items.find(
+        (project) => project.key === projectQueryParam,
+      )?.name;
+
       const defaultProject =
         projects.items.find((project) => project.key === DEFAULT_PROJECT_KEY) ?? projects.items[0];
-      setProjectKey(defaultProject.key);
+      setProjectKey(queryParamProject || defaultProject.key);
     }
   }, [projects]);
 
@@ -49,9 +54,24 @@ export const LaunchDarklyConfigProvider = ({ children }: LaunchDarklyConfigProvi
 
   useEffect(() => {
     if (environments?.items?.length) {
-      setEnv(environments.items[0]);
+      const defaultEnv = environments.items[0];
+
+      let queryParamEnv = null;
+      const envQueryParam = new URLSearchParams(window.location.search).get('env') || '';
+      if (envQueryParam) {
+        queryParamEnv = environments.items.find((env) => env.name === envQueryParam);
+      }
+
+      setEnv(queryParamEnv || defaultEnv);
     }
   }, [environments]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('project', projectKey || '');
+    url.searchParams.set('env', env?.name || '');
+    window.history.replaceState({}, '', url.toString());
+  }, [projectKey, env]);
 
   const accessToken = useMemo(() => {
     if (!accessTokens || !apiKey) {
