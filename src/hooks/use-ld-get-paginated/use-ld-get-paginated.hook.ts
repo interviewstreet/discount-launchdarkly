@@ -5,6 +5,7 @@ interface UseLdGetPaginatedProps {
   path: string;
   query?: Record<string, string | null>;
   pageSize: number;
+  skip?: boolean;
 }
 
 export interface UseLdGetPaginatedAPI<T> {
@@ -23,9 +24,12 @@ export const useLdGetPaginated = <T extends { items: Array<any> }>(
 
   const refetchWithProps = useCallback(
     async (fetchProps: UseLdGetPaginatedProps) => {
-      const responseJSON = await launchDarklyApi.fetchAllPages<T>(fetchProps);
-      setResponse(responseJSON);
-      setLoading(false);
+      try {
+        const responseJSON = await launchDarklyApi.fetchAllPages<T>(fetchProps);
+        setResponse(responseJSON);
+      } finally {
+        setLoading(false);
+      }
     },
     [launchDarklyApi],
   );

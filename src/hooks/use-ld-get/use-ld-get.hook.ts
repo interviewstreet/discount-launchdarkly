@@ -17,9 +17,12 @@ export const useLdGet = <T>(
   const { launchDarklyApi } = useLaunchDarklyApi();
 
   const refetchWithProps = useCallback(async (fetchProps: LaunchDarklyApiFetchProps) => {
-    const responseJSON = await launchDarklyApi.fetch<T>(fetchProps);
-    setResponse(responseJSON);
-    setLoading(false);
+    try {
+      const responseJSON = await launchDarklyApi.fetch<T>(fetchProps);
+      setResponse(responseJSON);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const refetch = useCallback(() => {

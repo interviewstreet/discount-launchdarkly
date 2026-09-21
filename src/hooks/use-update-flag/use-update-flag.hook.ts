@@ -60,15 +60,18 @@ export const useUpdateFlag = ({ flagKey }: { flagKey: string }): UseUpdateFlagAP
         return Promise.resolve(null);
       }
       setIsUpdatingFlag(true);
-      const response = await launchDarklyApi.semanticPatchFlag({
-        projectKey,
-        flagKey,
-        environmentKey: env.key,
-        instructions: [{ kind: instruction }],
-        comment,
-      });
-      setIsUpdatingFlag(false);
-      return response;
+      try {
+        const response = await launchDarklyApi.semanticPatchFlag({
+          projectKey,
+          flagKey,
+          environmentKey: env.key,
+          instructions: [{ kind: instruction }],
+          comment,
+        });
+        return response;
+      } finally {
+        setIsUpdatingFlag(false);
+      }
     },
     [canUpdate, env],
   );
@@ -84,23 +87,30 @@ export const useUpdateFlag = ({ flagKey }: { flagKey: string }): UseUpdateFlagAP
         return Promise.resolve(null);
       }
       setIsUpdatingFlag(true);
-      const response = await launchDarklyApi.patchFlag({
-        projectKey,
-        flagKey,
-        comment: 'Updating name / description',
-        operations: [
-          { op: 'replace', path: '/name', value: name },
-          { op: 'replace', path: '/description', value: description },
-          { op: 'replace', path: '/clientSideAvailability/usingMobileKey', value: usingMobileKey },
-          {
-            op: 'replace',
-            path: '/clientSideAvailability/usingEnvironmentId',
-            value: usingEnvironmentId,
-          },
-        ],
-      });
-      setIsUpdatingFlag(false);
-      return response;
+      try {
+        const response = await launchDarklyApi.patchFlag({
+          projectKey,
+          flagKey,
+          comment: 'Updating name / description',
+          operations: [
+            { op: 'replace', path: '/name', value: name },
+            { op: 'replace', path: '/description', value: description },
+            {
+              op: 'replace',
+              path: '/clientSideAvailability/usingMobileKey',
+              value: usingMobileKey,
+            },
+            {
+              op: 'replace',
+              path: '/clientSideAvailability/usingEnvironmentId',
+              value: usingEnvironmentId,
+            },
+          ],
+        });
+        return response;
+      } finally {
+        setIsUpdatingFlag(false);
+      }
     },
     [canUpdate, env],
   );
@@ -111,14 +121,17 @@ export const useUpdateFlag = ({ flagKey }: { flagKey: string }): UseUpdateFlagAP
         return Promise.resolve(null);
       }
       setIsUpdatingFlag(true);
-      const response = await launchDarklyApi.patchFlag({
-        projectKey,
-        flagKey,
-        comment,
-        operations: [{ op: 'replace', path: '/archived', value }],
-      });
-      setIsUpdatingFlag(false);
-      return response;
+      try {
+        const response = await launchDarklyApi.patchFlag({
+          projectKey,
+          flagKey,
+          comment,
+          operations: [{ op: 'replace', path: '/archived', value }],
+        });
+        return response;
+      } finally {
+        setIsUpdatingFlag(false);
+      }
     },
     [canUpdate, env],
   );
@@ -147,16 +160,19 @@ export const useUpdateFlag = ({ flagKey }: { flagKey: string }): UseUpdateFlagAP
         });
       }
 
-      const response = await launchDarklyApi.semanticPatchFlag({
-        projectKey,
-        flagKey,
-        environmentKey: env.key,
-        ignoreConflicts: true,
-        instructions,
-        comment,
-      });
-      setIsUpdatingFlag(false);
-      return response;
+      try {
+        const response = await launchDarklyApi.semanticPatchFlag({
+          projectKey,
+          flagKey,
+          environmentKey: env.key,
+          ignoreConflicts: true,
+          instructions,
+          comment,
+        });
+        return response;
+      } finally {
+        setIsUpdatingFlag(false);
+      }
     },
     [canUpdate, env],
   );
@@ -193,16 +209,19 @@ export const useUpdateFlag = ({ flagKey }: { flagKey: string }): UseUpdateFlagAP
       }
 
       setIsUpdatingFlag(true);
-      const response = await launchDarklyApi.semanticPatchFlag({
-        projectKey,
-        flagKey,
-        environmentKey: env.key,
-        ignoreConflicts: true,
-        instructions,
-        comment,
-      });
-      setIsUpdatingFlag(false);
-      return response;
+      try {
+        const response = await launchDarklyApi.semanticPatchFlag({
+          projectKey,
+          flagKey,
+          environmentKey: env.key,
+          ignoreConflicts: true,
+          instructions,
+          comment,
+        });
+        return response;
+      } finally {
+        setIsUpdatingFlag(false);
+      }
     },
     [canUpdate, env],
   );

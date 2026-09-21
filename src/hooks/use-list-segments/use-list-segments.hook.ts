@@ -17,16 +17,9 @@ export const useListSegments = ({
 }: UseSegmentsInterface): UseLdGetPaginatedAPI<ListSegmentsResponse> => {
   // https://apidocs.launchdarkly.com/tag/Segments#operation/getSegments
   // Fetches all segments across all pages (max 50 per page, API v20240415)
-  if (!env || !projectKey) {
-    return {
-      loading: true,
-      response: null,
-      refetch: async () => {},
-    };
-  }
-
   return useLdGetPaginated<ListSegmentsResponse>(
     {
+      skip: !env || !projectKey, // Don't do request until env is loaded
       path: `/api/v2/segments/${projectKey}/${env}`,
       pageSize: 50,
     },

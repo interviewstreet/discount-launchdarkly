@@ -120,11 +120,16 @@ export class LaunchDarklyApi {
     path,
     query,
     pageSize,
+    skip = false,
   }: {
     path: string;
     query?: Record<string, string | null>;
     pageSize: number;
+    skip?: boolean;
   }): Promise<T | null> {
+    if (skip) {
+      return Promise.resolve(null);
+    }
     // Fetch page 0 alone first. Most lists fit in one page (or are empty),
     // so this avoids firing wasted parallel requests in the common case.
     const firstResponse = await this.fetch<T>({
