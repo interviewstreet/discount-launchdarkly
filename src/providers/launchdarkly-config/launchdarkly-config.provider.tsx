@@ -2,8 +2,7 @@ import React, { useState, ReactNode, useEffect, useCallback, useMemo } from 'rea
 import { Center, Spinner } from '@chakra-ui/react';
 import { EnvironmentItem, ListEnvironmentsResponse } from 'hooks/use-list-environments';
 import { LaunchDarklyConfigContext } from './launchdarkly-config.context';
-import { useListAccessTokens } from 'hooks/use-list-access-tokens';
-import { useLaunchDarklyApi } from 'hooks/use-launchdarkly-api';
+import { useCurrentAccessToken } from 'hooks/use-current-access-token';
 import { DEFAULT_PROJECT_KEY } from './constants';
 import { useListProjects } from 'hooks/use-list-projects';
 
@@ -11,7 +10,6 @@ interface LaunchDarklyConfigProviderProps {
   children: ReactNode;
 }
 export const LaunchDarklyConfigProvider = ({ children }: LaunchDarklyConfigProviderProps) => {
-  const { apiKey } = useLaunchDarklyApi();
   const [projectKey, setProjectKey] = useState<string>();
   const [env, setEnv] = useState<EnvironmentItem | null>(null);
 
@@ -26,7 +24,7 @@ export const LaunchDarklyConfigProvider = ({ children }: LaunchDarklyConfigProvi
 
   const { loading: loadingProjects, response: projects } = useListProjects();
 
-  const { loading: loadingAccessTokens, response: accessTokens } = useListAccessTokens();
+  const { loading: loadingAccessToken, response: accessToken } = useCurrentAccessToken();
 
   useEffect(() => {
     if (projects?.items?.length) {
@@ -53,14 +51,7 @@ export const LaunchDarklyConfigProvider = ({ children }: LaunchDarklyConfigProvi
     }
   }, [environments]);
 
-  const accessToken = useMemo(() => {
-    if (!accessTokens || !apiKey) {
-      return null;
-    }
-    return accessTokens.items.find((token) => apiKey.endsWith(token.token)) ?? null;
-  }, [apiKey, accessTokens]);
-
-  const loading = loadingProjects || loadingAccessTokens || !accessToken || !env || !environments;
+  const loading = loadingProjects || loadingAccessToken || !env || !environments;
 
   return (
     <LaunchDarklyConfigContext.Provider

@@ -43,9 +43,13 @@ export class LaunchDarklyApi {
       body,
       headers: {
         Authorization: this.apiKey,
+        'LD-API-Version': '20240415',
         ...headers,
       },
     });
+    if (!response.ok) {
+      throw new Error(`${method} ${url} failed with status ${response.status}`);
+    }
     const json: T = await response.json();
     return json;
   }
@@ -110,5 +114,106 @@ export class LaunchDarklyApi {
         comment,
       }),
     });
+  }
+
+  async fetchAllPages<T extends { items: Array<any> }>({
+    path,
+    query,
+    pageSize,
+  }: {
+    path: string;
+    query?: Record<string, string | null>;
+    pageSize: number;
+  }): Promise<T | null> {
+    // Fetch page 0 alone first. Most lists fit in one page (or are empty),
+    // so this avoids firing wasted parallel requests in the common case.
+    const firstResponse = await this.fetch<T>({
+      path,
+      query: {
+        ...query,
+        limit: pageSize.toString(),
+        offset: '0',
+      },
+      method: 'GET',
+    });
+
+    const firstItems = firstResponse?.items ?? [];
+    if (firstItems.length < pageSize) {
+      // Last (or only) page — nothing more to fetch.
+      return firstResponse;
+    }
+
+    // Page 0 was full, so there may be more.
+    const allItems: Array<any> = [...firstItems];
+    const reportedTotalCount = (firstResponse as any)?.totalCount;
+
+    if (typeof reportedTotalCount === 'number') {
+      // We know exactly how many pages remain — fetch them all in one shot.
+      const totalPages = Math.ceil(reportedTotalCount / pageSize);
+      const remainingPageIndexes = Array.from(
+        { length: Math.max(totalPages - 1, 0) },
+        (_, i) => i + 1,
+      );
+      const remainingResponses = await Promise.all(
+        remainingPageIndexes.map((pageIndex) =>
+          this.fetch<T>({
+            path,
+            query: {
+              ...query,
+              limit: pageSize.toString(),
+              offset: (pageIndex * pageSize).toString(),
+            },
+            method: 'GET',
+          }),
+        ),
+      );
+      for (const pageResponse of remainingResponses) {
+        allItems.push(...(pageResponse?.items ?? []));
+      }
+    } else {
+      // No reliable totalCount from this endpoint — fetch subsequent pages
+      // in parallel batches instead of trusting a computed page count. A
+      // batch is the last one once any page in it comes back short.
+      const BATCH_CONCURRENCY = 4;
+      let nextPageIndex = 1;
+      let done = false;
+
+      while (!done) {
+        const batchPageIndexes = Array.from(
+          { length: BATCH_CONCURRENCY },
+          (_, i) => nextPageIndex + i,
+        );
+        const batchResponses = await Promise.all(
+          batchPageIndexes.map((pageIndex) =>
+            this.fetch<T>({
+              path,
+              query: {
+                ...query,
+                limit: pageSize.toString(),
+                offset: (pageIndex * pageSize).toString(),
+              },
+              method: 'GET',
+            }),
+          ),
+        );
+
+        for (const pageResponse of batchResponses) {
+          const items = pageResponse?.items ?? [];
+          allItems.push(...items);
+          if (items.length < pageSize) {
+            done = true;
+            break;
+          }
+        }
+
+        nextPageIndex += BATCH_CONCURRENCY;
+      }
+    }
+
+    return {
+      ...firstResponse,
+      items: allItems,
+      totalCount: allItems.length,
+    } as unknown as T;
   }
 }

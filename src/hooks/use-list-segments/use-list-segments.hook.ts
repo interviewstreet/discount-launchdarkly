@@ -1,26 +1,34 @@
-import { useLdGet, UseLdGetAPI } from 'hooks/use-ld-get';
+import { useLdGetPaginated, UseLdGetPaginatedAPI } from 'hooks/use-ld-get-paginated';
 import { SegmentItem } from './types';
 
 export interface ListSegmentsResponse {
   items: Array<SegmentItem>;
+  totalCount?: number;
 }
 
 interface UseSegmentsInterface {
   env: string | null;
   projectKey: string | null;
 }
+
 export const useListSegments = ({
   env,
   projectKey,
-}: UseSegmentsInterface): UseLdGetAPI<ListSegmentsResponse> => {
+}: UseSegmentsInterface): UseLdGetPaginatedAPI<ListSegmentsResponse> => {
   // https://apidocs.launchdarkly.com/tag/Segments#operation/getSegments
-  //app.launchdarkly.com
+  // Fetches all segments across all pages (max 50 per page, API v20240415)
+  if (!env || !projectKey) {
+    return {
+      loading: true,
+      response: null,
+      refetch: async () => {},
+    };
+  }
 
-  return useLdGet<ListSegmentsResponse>(
+  return useLdGetPaginated<ListSegmentsResponse>(
     {
-      skip: !env || !projectKey, // Don't do request until env is loaded
       path: `/api/v2/segments/${projectKey}/${env}`,
-      method: 'GET',
+      pageSize: 50,
     },
     [projectKey, env],
   );
